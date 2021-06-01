@@ -1,0 +1,15 @@
+bin/
+Debug/
+*.ignore/
+obj/
+
+# C# files
+*.suo
+*.user
+
+# dll and executables
+*.dll
+*.exe
+*.pdb
+*.xml
+
