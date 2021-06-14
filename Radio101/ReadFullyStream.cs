@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace NAudioDemo.Mp3StreamingDemo
@@ -103,7 +104,15 @@ namespace NAudioDemo.Mp3StreamingDemo
                             while (r != toRead)
                                 r += sourceStream.Read(icyDataByteArray, r, toRead - r);
 
-                            this.icyData = System.Text.Encoding.Default.GetString(this.icyDataByteArray);
+                            int zeroIndex = Array.IndexOf(icyDataByteArray, 0);
+                            byte[] ba;
+                            if (zeroIndex != -1)
+                                ba = this.icyDataByteArray.Take(zeroIndex).ToArray();
+                            else
+                                ba = this.icyDataByteArray;
+
+
+                            this.icyData = System.Text.Encoding.Default.GetString(ba);
                             System.Diagnostics.Debug.WriteLine(icyData);
                             if (this.OnIcyData != null)
                                 this.OnIcyData(this, EventArgs.Empty);
