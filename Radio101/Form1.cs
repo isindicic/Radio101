@@ -25,6 +25,11 @@ namespace Radio101
             player.Top = 0;
             player.Left = 0;
             player.Visible = true;
+            player.OnIcyData += (s, e) => { this.Invoke(new MethodInvoker(delegate { 
+                lblStreamInfo.Text = player.StreamTitle;
+                this.Text = "Radio101 - " + player.StreamTitle; 
+            }));  };
+
             this.Controls.Add(player);
         }
 

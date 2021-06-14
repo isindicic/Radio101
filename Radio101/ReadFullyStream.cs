@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace NAudioDemo.Mp3StreamingDemo
 {
@@ -11,11 +12,23 @@ namespace NAudioDemo.Mp3StreamingDemo
         private int readAheadLength;
         private int readAheadOffset;
 
-        public ReadFullyStream(Stream sourceStream)
+        private int icyMetaData = 0;
+        private byte[] icyDataByteArray;
+        public string icyData = "";
+        public EventHandler OnIcyData = null;
+
+        public ReadFullyStream(Stream sourceStream) : this(sourceStream, 0)
+        {
+        }
+
+        public ReadFullyStream(Stream sourceStream, int icyMetaData)
         {
             this.sourceStream = sourceStream;
-            readAheadBuffer = new byte[4096];
+            this.icyMetaData = icyMetaData;
+            readAheadBuffer = new byte[4096 + icyMetaData];
+            icyDataByteArray = new byte[4096];
         }
+
         public override bool CanRead
         {
             get { return true; }
@@ -53,7 +66,6 @@ namespace NAudioDemo.Mp3StreamingDemo
             }
         }
 
-
         public override int Read(byte[] buffer, int offset, int count)
         {
             int bytesRead = 0;
@@ -71,7 +83,34 @@ namespace NAudioDemo.Mp3StreamingDemo
                 else
                 {
                     readAheadOffset = 0;
-                    readAheadLength = sourceStream.Read(readAheadBuffer, 0, readAheadBuffer.Length);
+                    if (this.icyMetaData > 0)
+                    {
+                        int toRead = icyMetaData + 1;
+                        int r = 0;
+
+                        while(r != toRead)
+                            r += sourceStream.Read(readAheadBuffer, r, toRead - r);
+
+                        readAheadLength = icyMetaData;
+                        int icyLen = 16 * readAheadBuffer[icyMetaData];
+                        if (icyLen > 0)
+                        {
+                            toRead = icyLen;
+                            if(this.icyDataByteArray.Length < toRead)
+                                this.icyDataByteArray = new byte[toRead];
+                            r = 0;
+
+                            while (r != toRead)
+                                r += sourceStream.Read(icyDataByteArray, r, toRead - r);
+
+                            this.icyData = System.Text.Encoding.Default.GetString(this.icyDataByteArray);
+                            System.Diagnostics.Debug.WriteLine(icyData);
+                            if (this.OnIcyData != null)
+                                this.OnIcyData(this, EventArgs.Empty);
+                        }
+                    }
+                    else
+                        readAheadLength = sourceStream.Read(readAheadBuffer, 0, readAheadBuffer.Length);
                     //Debug.WriteLine(String.Format("Read {0} bytes (requested {1})", readAheadLength, readAheadBuffer.Length));
                     if (readAheadLength == 0)
                     {

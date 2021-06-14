@@ -5,6 +5,8 @@ using System.Net;
 using System.Threading;
 using System.Windows.Forms;
 using NAudio.Wave;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace NAudioDemo.Mp3StreamingDemo
 {
@@ -22,6 +24,8 @@ namespace NAudioDemo.Mp3StreamingDemo
         public string url { get { return textBoxStreamingUrl.Text; } set { textBoxStreamingUrl.Text = value; } }
         public void StopStream() { this.buttonStop_Click(this, null); }
         public void PlayStream() { this.buttonPlay_Click(this, null); }
+        public EventHandler OnIcyData = null;
+
 
         public Mp3StreamingPanel()
         {
@@ -59,15 +63,29 @@ namespace NAudioDemo.Mp3StreamingDemo
             }
         }
 
+
+        private Dictionary<string, string> responseHdr;
+        public string StreamTitle;
+
         private void StreamMp3(object state)
         {
             fullyDownloaded = false;
             var url = (string)state;
             webRequest = (HttpWebRequest)WebRequest.Create(url);
+            webRequest.Headers.Add("Icy-MetaData", "1");
+            webRequest.UserAgent = "Radio101 player";
+
             HttpWebResponse resp;
+            int icyMetaInt = 0;
+
             try
             {
                 resp = (HttpWebResponse)webRequest.GetResponse();
+                icyMetaInt = Convert.ToInt32(resp.Headers["Icy-MetaInt"] ?? "0");
+                
+                responseHdr = new Dictionary<string, string>();
+                foreach (string k in resp.Headers.Keys)
+                    this.responseHdr[k] = resp.Headers[k];
             }
             catch(WebException e)
             {
@@ -84,7 +102,14 @@ namespace NAudioDemo.Mp3StreamingDemo
             {
                 using (var responseStream = resp.GetResponseStream())
                 {
-                    var readFullyStream = new ReadFullyStream(responseStream);
+                    var readFullyStream = new ReadFullyStream(responseStream, icyMetaInt);
+
+                    readFullyStream.OnIcyData += (s, e) => { 
+                                this.StreamTitle = Regex.Match(readFullyStream.icyData, "(StreamTitle=')(.*)(';)").Groups[2].Value.Trim();
+                                if (this.OnIcyData != null) 
+                                    this.OnIcyData(s, e);
+                            };
+
                     do
                     {
                         if (IsBufferNearlyFull)
