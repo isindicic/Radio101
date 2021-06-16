@@ -22,6 +22,7 @@ namespace NAudioDemo.Mp3StreamingDemo
 
 
         public string url { get { return textBoxStreamingUrl.Text; } set { textBoxStreamingUrl.Text = value; } }
+        public float volume { get { return volumeSlider1.Volume; } set { volumeSlider1.Volume = value;  } }
         public void StopStream() { this.buttonStop_Click(this, null); }
         public void PlayStream() { this.buttonPlay_Click(this, null); }
         public EventHandler OnIcyData = null;

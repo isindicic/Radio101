@@ -11,11 +11,14 @@ namespace Radio101
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] argv)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+
+            bool portableMode  = (argv.Length == 1 && argv[0] == "--portable");
+            Form1 f = new Form1(portableMode);
+            Application.Run(f);
         }
     }
 }
