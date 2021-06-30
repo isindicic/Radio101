@@ -111,7 +111,7 @@ namespace NAudioDemo.Mp3StreamingDemo
                             else
                                 ba = this.icyDataByteArray;
 
-                            this.icyData = System.Text.Encoding.Default.GetString(ba);
+                            this.icyData = System.Text.Encoding.UTF8.GetString(ba);
                             if (this.OnIcyData != null)
                                 this.OnIcyData(this, EventArgs.Empty);
                         }
